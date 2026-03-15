@@ -1,15 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Package } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DeleteConfirmModal } from "@/components/delete-confirm-modal";
+import { EmptyState } from "@/components/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Toast } from "@/components/ui/toast";
 import type { Ingredient } from "@/types";
 
 export default function IngredientsPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
     unit: "",
@@ -75,6 +85,7 @@ export default function IngredientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.unit.trim()) return;
+    setSubmitting(true);
 
     const nutrition =
       form.calories || form.protein || form.fat || form.carbs
@@ -116,21 +127,32 @@ export default function IngredientsPage() {
         }
       }
       resetForm();
+      setSuccessMessage(editingId ? "更新しました。" : "登録しました。");
+      setError(null);
       await fetchIngredients();
+      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("この食材を削除しますか？")) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
+    setDeleteLoading(true);
     try {
-      const res = await fetch(`/api/ingredients/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/ingredients/${deleteTargetId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("削除に失敗しました");
       await fetchIngredients();
-      if (editingId === id) resetForm();
+      if (editingId === deleteTargetId) resetForm();
+      setDeleteTargetId(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -152,43 +174,59 @@ export default function IngredientsPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+        <div className="mb-4">
+          <Alert variant="error">{error}</Alert>
         </div>
       )}
+      <Toast
+        message={successMessage ?? ""}
+        visible={!!successMessage}
+        onDismiss={() => setSuccessMessage(null)}
+        durationMs={4000}
+      />
 
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"
+          className="mb-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80"
         >
-          <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-50">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             {editingId ? "編集" : "新規登録"}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                食材名 *
+              <label
+                htmlFor="ing-name"
+                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                食材名 <span className="text-red-600 dark:text-red-400">必須</span>
               </label>
               <input
+                id="ing-name"
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                 required
+                aria-required="true"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                単位 *
+              <label
+                htmlFor="ing-unit"
+                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                単位 <span className="text-red-600 dark:text-red-400">必須</span>
               </label>
               <input
+                id="ing-unit"
                 type="text"
                 value={form.unit}
                 onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
                 placeholder="g, 個, 本"
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                 required
+                aria-required="true"
               />
             </div>
             <div>
@@ -203,7 +241,7 @@ export default function IngredientsPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, unit_price: e.target.value }))
                 }
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
             <div>
@@ -217,7 +255,7 @@ export default function IngredientsPage() {
                   setForm((f) => ({ ...f, category: e.target.value }))
                 }
                 placeholder="野菜, 肉類"
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
             <div>
@@ -232,7 +270,7 @@ export default function IngredientsPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, calories: e.target.value }))
                 }
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
             <div>
@@ -247,7 +285,7 @@ export default function IngredientsPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, protein: e.target.value }))
                 }
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
             <div>
@@ -262,7 +300,7 @@ export default function IngredientsPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, fat: e.target.value }))
                 }
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
             <div>
@@ -277,28 +315,41 @@ export default function IngredientsPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, carbs: e.target.value }))
                 }
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
           </div>
-          <div className="mt-3 flex gap-2">
-            <Button type="submit">{editingId ? "更新" : "登録"}</Button>
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button type="button" variant="outline" onClick={resetForm}>
               キャンセル
+            </Button>
+            <Button type="submit" className="ml-auto" disabled={submitting}>
+              {submitting ? "保存中..." : editingId ? "更新" : "登録"}
             </Button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <p className="text-zinc-500 dark:text-zinc-400">読み込み中...</p>
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+        </div>
       ) : ingredients.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-          食材がありません。「追加」から登録してください。
-        </p>
+        <EmptyState
+          icon={Package}
+          title="食材がまだ登録されていません"
+          description="食材を登録すると、レシピや献立で使えるようになります"
+          ctaLabel="最初の食材を追加する"
+          ctaOnClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
-          <table className="w-full min-w-[500px] text-left text-sm">
+          <table className="w-full min-w-[500px] text-left text-base">
             <thead className="bg-zinc-100 dark:bg-zinc-800">
               <tr>
                 <th className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
@@ -316,7 +367,7 @@ export default function IngredientsPage() {
                 <th className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
                   栄養(100g)
                 </th>
-                <th className="w-32 px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
+                <th className="w-36 px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
                   操作
                 </th>
               </tr>
@@ -325,7 +376,7 @@ export default function IngredientsPage() {
               {ingredients.map((row) => (
                 <tr
                   key={row.id}
-                  className="bg-white dark:bg-zinc-900"
+                  className="bg-white transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/80"
                 >
                   <td className="px-4 py-3 text-zinc-900 dark:text-zinc-100">
                     {row.name}
@@ -351,6 +402,7 @@ export default function IngredientsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="min-h-10 min-w-10"
                         onClick={() => handleEdit(row)}
                       >
                         編集
@@ -358,7 +410,8 @@ export default function IngredientsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDelete(row.id)}
+                        className="min-h-10 min-w-10"
+                        onClick={() => setDeleteTargetId(row.id)}
                       >
                         削除
                       </Button>
@@ -370,6 +423,15 @@ export default function IngredientsPage() {
           </table>
         </div>
       )}
+
+      <DeleteConfirmModal
+        open={deleteTargetId !== null}
+        title="食材を削除"
+        message="この食材を削除しますか？この操作は取り消せません。"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+        loading={deleteLoading}
+      />
     </div>
   );
 }

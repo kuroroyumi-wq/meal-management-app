@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Recipe } from "@/types";
 
@@ -45,20 +49,28 @@ export default function RecipesPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+        <div className="mb-4">
+          <Alert variant="error">{error}</Alert>
         </div>
       )}
 
       {loading ? (
-        <p className="text-zinc-500 dark:text-zinc-400">読み込み中...</p>
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+        </div>
       ) : recipes.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-          レシピがありません。「新規登録」から追加してください。
-        </p>
+        <EmptyState
+          icon={BookOpen}
+          title="レシピがまだ登録されていません"
+          description="レシピを登録すると、献立で使えるようになります"
+          ctaLabel="最初のレシピを登録する"
+          ctaHref="/recipes/new"
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
-          <table className="w-full min-w-[500px] text-left text-sm">
+          <table className="w-full min-w-[500px] text-left text-base">
             <thead className="bg-zinc-100 dark:bg-zinc-800">
               <tr>
                 <th className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
@@ -70,14 +82,17 @@ export default function RecipesPage() {
                 <th className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
                   人数
                 </th>
-                <th className="w-24 px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
+                <th className="w-28 px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
                   操作
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {recipes.map((row) => (
-                <tr key={row.id} className="bg-white dark:bg-zinc-900">
+                <tr
+                  key={row.id}
+                  className="bg-white transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/80"
+                >
                   <td className="px-4 py-3">
                     <Link
                       href={`/recipes/${row.id}`}
@@ -96,7 +111,8 @@ export default function RecipesPage() {
                     <Link
                       href={`/recipes/${row.id}`}
                       className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" })
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        "inline-flex min-h-10 min-w-10"
                       )}
                     >
                       詳細

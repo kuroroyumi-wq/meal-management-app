@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Alert } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Recipe } from "@/types";
@@ -37,6 +38,7 @@ export default function MenuNewPage() {
   const [weekStart, setWeekStart] = useState("");
   const [headcount, setHeadcount] = useState("30");
   const [rows, setRows] = useState<MenuItemRow[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -88,6 +90,7 @@ export default function MenuNewPage() {
     e.preventDefault();
     if (!weekStart.trim()) return;
     setError(null);
+    setSubmitting(true);
     try {
       const res = await fetch("/api/menu", {
         method: "POST",
@@ -115,6 +118,8 @@ export default function MenuNewPage() {
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -133,13 +138,13 @@ export default function MenuNewPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+        <div className="mb-4">
+          <Alert variant="error">{error}</Alert>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -169,8 +174,8 @@ export default function MenuNewPage() {
         </div>
 
         {rows.length > 0 && (
-          <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-            <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-50">
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+            <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               献立（日付 × 食事区分）
             </h2>
             <div className="overflow-x-auto">
@@ -249,13 +254,17 @@ export default function MenuNewPage() {
           </div>
         )}
 
-        <div className="flex gap-2">
-          <Button type="submit" disabled={!weekStart}>
-            作成
-          </Button>
+        <div className="flex flex-wrap gap-3">
           <Link href="/menu" className={cn(buttonVariants({ variant: "outline" }))}>
             キャンセル
           </Link>
+          <Button
+            type="submit"
+            className="ml-auto"
+            disabled={!weekStart || submitting}
+          >
+            {submitting ? "作成中..." : "作成"}
+          </Button>
         </div>
       </form>
     </div>

@@ -117,3 +117,63 @@ export async function generateWeeklyMenu(
   const parsed = JSON.parse(jsonStr) as GeneratedMenuJson;
   return parsed;
 }
+
+/**
+ * 余り食材用レシピ名リストで、10パターンの1週間献立を生成する
+ */
+export async function generateLeftoverPatterns(
+  recipeNames: string[],
+  ingredientNames: string[]
+): Promise<GeneratedMenuJson[]> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY が設定されていません");
+  }
+
+  const recipeList =
+    recipeNames.length > 0
+      ? recipeNames.join("、")
+      : "（在庫から作れるレシピがありません）";
+  const ingredientList =
+    ingredientNames.length > 0
+      ? ingredientNames.slice(0, 60).join("、")
+      : "特になし";
+
+  const prompt = `あなたは高齢者施設の献立担当です。以下の「余り食材で作れるレシピ」だけを使って、1週間（月〜日）の献立を**10パターン**作成してください。
+
+【使えるレシピ名（この中からだけ選ぶこと）】
+${recipeList}
+
+【余り食材の例】
+${ingredientList}
+
+【出力形式】
+以下のJSON形式のみを返してください。説明文は不要です。10個の献立パターンを配列で返してください。各パターンは月〜日で朝食・昼食・夕食のレシピ名を入れてください。レシピ名は上記の一覧から選び、表記を揃えてください。
+
+[
+  { "monday": { "breakfast": "レシピ名", "lunch": "レシピ名", "dinner": "レシピ名" }, "tuesday": { ... }, "wednesday": { ... }, "thursday": { ... }, "friday": { ... }, "saturday": { ... }, "sunday": { ... } },
+  ... (合計10個)
+]`;
+
+  const anthropic = new Anthropic({ apiKey });
+  const response = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 8192,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const textBlock = response.content.find((b) => b.type === "text");
+  const raw =
+    textBlock && "text" in textBlock ? String(textBlock.text) : "";
+  const arrayStart = raw.indexOf("[");
+  const arrayEnd = raw.lastIndexOf("]");
+  if (arrayStart === -1 || arrayEnd === -1 || arrayEnd <= arrayStart) {
+    throw new Error("AIの応答から配列を取得できませんでした");
+  }
+  const jsonStr = raw.slice(arrayStart, arrayEnd + 1);
+  const parsed = JSON.parse(jsonStr) as GeneratedMenuJson[];
+  if (!Array.isArray(parsed)) {
+    throw new Error("AIの応答が配列形式ではありませんでした");
+  }
+  return parsed.slice(0, 10);
+}

@@ -82,6 +82,14 @@ npm run dev
 
 ブラウザで [http://localhost:3000](http://localhost:3000) を開き、ログイン画面が表示されれば OK です。未ログインの場合は `/login` にリダイレクトされます。
 
+### 5. テストの実行
+
+```bash
+npm run test
+```
+
+[Vitest](https://vitest.dev/) でユニットテストを実行します。`lib/inventory-recipes.test.ts` で在庫から作れるレシピ判定ロジックのテストが含まれています。監視モードで実行する場合は `npm run test:watch` を使います。
+
 ---
 
 ## Vercel へのデプロイ
@@ -102,6 +110,8 @@ npm run dev
 | `npm run dev` | 開発サーバー起動 |
 | `npm run build` | 本番ビルド |
 | `npm run start` | 本番サーバー起動 |
+| `npm run test` | テスト実行（Vitest） |
+| `npm run test:watch` | テスト監視モード |
 | `npm run lint` | ESLint 実行 |
 
 ---
@@ -111,6 +121,7 @@ npm run dev
 - `docs/requirements.md` … 要件定義
 - `docs/basic-design.md` … 基本設計・API・DB
 - `docs/er-diagram.md` … テーブル定義 SQL
+- `docs/デザイン統一ルール.md` … UI のカラー・余白・コンポーネントルール（デザイン改善時は参照）
 - `docs/STEP-BY-STEP.md` … 開発進捗メモ
 
 ---

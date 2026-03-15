@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Alert } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Ingredient } from "@/types";
@@ -28,6 +29,7 @@ export default function RecipeEditPage() {
   const [rows, setRows] = useState<IngredientRow[]>([
     { ingredient_id: "", amount: "", unit: "" },
   ]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -95,6 +97,7 @@ export default function RecipeEditPage() {
     e.preventDefault();
     if (!form.name.trim()) return;
     setError(null);
+    setSubmitting(true);
     try {
       const res = await fetch(`/api/recipes/${id}`, {
         method: "PUT",
@@ -120,6 +123,8 @@ export default function RecipeEditPage() {
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -142,14 +147,14 @@ export default function RecipeEditPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+        <div className="mb-4">
+          <Alert variant="error">{error}</Alert>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-          <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-50">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             基本情報
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -230,9 +235,9 @@ export default function RecipeEditPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               材料
             </h2>
             <Button type="button" variant="outline" size="sm" onClick={addRow}>
@@ -303,14 +308,16 @@ export default function RecipeEditPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button type="submit">更新</Button>
+        <div className="flex flex-wrap gap-3">
           <Link
             href={`/recipes/${id}`}
             className={cn(buttonVariants({ variant: "outline" }))}
           >
             キャンセル
           </Link>
+          <Button type="submit" className="ml-auto" disabled={submitting}>
+            {submitting ? "更新中..." : "更新"}
+          </Button>
         </div>
       </form>
     </div>
