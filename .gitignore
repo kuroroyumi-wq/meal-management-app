@@ -28,7 +28,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# env files / 秘密情報（push しない）
 .env*
 
 # vercel
@@ -38,17 +38,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ===== 秘密情報・認証情報（絶対に push しない） =====
+# 秘密情報・認証情報
 .env
 .env.*
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
 *.key
 *.pem
 secrets/
 credentials/
-*.credentials
-config.local.*
-.local/

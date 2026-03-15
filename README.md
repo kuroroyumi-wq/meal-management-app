@@ -95,6 +95,26 @@ npm run dev
 
 ---
 
+## スクリプト
+
+| コマンド | 説明 |
+|----------|------|
+| `npm run dev` | 開発サーバー起動 |
+| `npm run build` | 本番ビルド |
+| `npm run start` | 本番サーバー起動 |
+| `npm run lint` | ESLint 実行 |
+
+---
+
+## ドキュメント
+
+- `docs/requirements.md` … 要件定義
+- `docs/basic-design.md` … 基本設計・API・DB
+- `docs/er-diagram.md` … テーブル定義 SQL
+- `docs/STEP-BY-STEP.md` … 開発進捗メモ
+
+---
+
 ## ライセンス
 
 Private / ポートフォリオ用
