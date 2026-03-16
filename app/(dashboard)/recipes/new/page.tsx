@@ -32,6 +32,7 @@ export default function RecipeNewPage() {
   const [rows, setRows] = useState<IngredientRow[]>([
     { ingredient_id: "", amount: "", unit: "" },
   ]);
+  const [mode, setMode] = useState<"normal" | "simple">("normal");
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -123,6 +124,8 @@ export default function RecipeNewPage() {
           servings: Number(form.servings) || 1,
           meal_type: form.meal_type || null,
           source_url: form.source_url.trim() || null,
+          status: mode === "simple" ? "simple" : "draft",
+          is_template: mode === "normal",
           recipe_ingredients: rows
             .filter((r) => r.ingredient_id && r.amount && r.unit)
             .map((r) => ({
@@ -145,16 +148,49 @@ export default function RecipeNewPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex flex-wrap items-center gap-4">
         <Link
           href="/recipes"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
         >
           ← 一覧
         </Link>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          レシピ登録
-        </h1>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:flex-1">
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              レシピ登録
+            </h1>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              現場の運用に合わせて、「通常登録」と「簡易登録」を選べます。
+            </p>
+          </div>
+          <div className="inline-flex rounded-lg bg-zinc-100 p-1 text-sm dark:bg-zinc-800">
+            <button
+              type="button"
+              onClick={() => setMode("normal")}
+              className={cn(
+                "rounded-md px-3 py-1.5",
+                mode === "normal"
+                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+                  : "text-zinc-600 dark:text-zinc-300"
+              )}
+            >
+              通常登録
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("simple")}
+              className={cn(
+                "rounded-md px-3 py-1.5",
+                mode === "simple"
+                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+                  : "text-zinc-600 dark:text-zinc-300"
+              )}
+            >
+              簡易登録
+            </button>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -163,31 +199,33 @@ export default function RecipeNewPage() {
         </div>
       )}
 
-      <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          URLから取り込む
-        </h2>
-        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
-          レシピのURLを入力すると、タイトルと材料を自動で取り込みます（対応サイト: 構造化データまたは材料リストがあるページ）。
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <input
-            type="url"
-            value={scrapeUrl}
-            onChange={(e) => setScrapeUrl(e.target.value)}
-            placeholder="https://..."
-            className="min-w-[240px] flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleScrape}
-            disabled={scraping}
-          >
-            {scraping ? "取り込み中..." : "取り込む"}
-          </Button>
+      {mode === "normal" && (
+        <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            URLから取り込む
+          </h2>
+          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+            レシピのURLを入力すると、タイトルと材料を自動で取り込みます（対応サイト: 構造化データまたは材料リストがあるページ）。
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <input
+              type="url"
+              value={scrapeUrl}
+              onChange={(e) => setScrapeUrl(e.target.value)}
+              placeholder="https://..."
+              className="min-w-[240px] flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleScrape}
+              disabled={scraping}
+            >
+              {scraping ? "取り込み中..." : "取り込む"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
@@ -281,6 +319,11 @@ export default function RecipeNewPage() {
               行を追加
             </Button>
           </div>
+          <p className="mb-3 text-xs text-zinc-600 dark:text-zinc-400">
+            {mode === "simple"
+              ? "よく使う食材だけ選んで、ざっくり量を入れてください。後から通常編集で細かく調整できます。"
+              : "食材マスタから選択して、人数1人あたりの材料量を入力します。"}
+          </p>
           <div className="space-y-2">
             {rows.map((row, index) => (
               <div

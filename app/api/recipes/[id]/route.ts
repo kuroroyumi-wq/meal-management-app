@@ -80,6 +80,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
       meal_type,
       source_url,
       recipe_ingredients,
+      status,
+      is_template,
+      is_active,
+      base_recipe_id,
     } = body;
 
     if (!name || name.toString().trim() === "") {
@@ -107,6 +111,16 @@ export async function PUT(request: Request, { params }: RouteParams) {
         source_url:
           source_url != null && source_url !== ""
             ? String(source_url).trim()
+            : null,
+        status:
+          status != null && status !== ""
+            ? String(status).trim()
+            : "draft",
+        is_template: typeof is_template === "boolean" ? is_template : false,
+        is_active: is_active === false ? false : true,
+        base_recipe_id:
+          base_recipe_id != null && base_recipe_id !== ""
+            ? String(base_recipe_id)
             : null,
       })
       .eq("id", id)

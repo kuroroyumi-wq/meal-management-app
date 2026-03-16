@@ -1,0 +1,10 @@
+-- レシピUX拡張用のカラム追加
+-- 既存の recipes テーブルに対して、定番フラグ・ステータス・複製元などを持たせる
+
+ALTER TABLE recipes
+  ADD COLUMN IF NOT EXISTS is_template BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft',
+  ADD COLUMN IF NOT EXISTS base_recipe_id UUID NULL REFERENCES recipes(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS created_by UUID NULL,
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+

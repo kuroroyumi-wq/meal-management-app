@@ -24,6 +24,8 @@ export interface Ingredient {
   created_at: string;
 }
 
+export type RecipeStatus = "draft" | "simple" | "published";
+
 export interface Recipe {
   id: string;
   name: string;
@@ -32,6 +34,11 @@ export interface Recipe {
   meal_type: MealType | null;
   source_url: string | null;
   created_at: string;
+  is_template?: boolean;
+  status?: RecipeStatus;
+  base_recipe_id?: string | null;
+  created_by?: string | null;
+  is_active?: boolean;
 }
 
 export interface RecipeIngredient {
