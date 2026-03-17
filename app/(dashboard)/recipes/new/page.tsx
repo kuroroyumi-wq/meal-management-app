@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Alert } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -19,6 +19,7 @@ type IngredientRow = {
 
 export default function RecipeNewPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,9 +34,15 @@ export default function RecipeNewPage() {
     { ingredient_id: "", amount: "", unit: "" },
   ]);
   const [mode, setMode] = useState<"normal" | "simple">("normal");
+  const [isTemplate, setIsTemplate] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const q = searchParams.get("mode");
+    if (q === "simple") setMode("simple");
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchIngredients() {
@@ -125,7 +132,7 @@ export default function RecipeNewPage() {
           meal_type: form.meal_type || null,
           source_url: form.source_url.trim() || null,
           status: mode === "simple" ? "simple" : "draft",
-          is_template: mode === "normal",
+          is_template: mode === "normal" ? isTemplate : false,
           recipe_ingredients: rows
             .filter((r) => r.ingredient_id && r.amount && r.unit)
             .map((r) => ({
@@ -307,6 +314,22 @@ export default function RecipeNewPage() {
                 className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
+            {mode === "normal" && (
+              <div className="sm:col-span-2">
+                <label className="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={isTemplate}
+                    onChange={(e) => setIsTemplate(e.target.checked)}
+                    className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-zinc-600"
+                  />
+                  定番レシピとして使い回す
+                </label>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  定番は一覧で見つけやすくなり、複製して新メニューを作れます。
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

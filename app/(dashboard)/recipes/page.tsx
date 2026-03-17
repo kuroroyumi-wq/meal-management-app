@@ -39,19 +39,33 @@ export default function RecipesPage() {
     fetchRecipes();
   }, []);
 
-  const filteredRecipes = useMemo(() => {
-    return recipes.filter((r) => {
+  const visibleRecipes = useMemo(() => {
+    const filtered = recipes.filter((r) => {
       if (!r.is_active && r.is_active !== undefined) return false;
       if (templateOnly && !r.is_template) return false;
-      if (statusFilter !== "all" && r.status && r.status !== statusFilter)
-        return false;
-      if (mealTypeFilter !== "all" && r.meal_type && r.meal_type !== mealTypeFilter)
-        return false;
+
+      const status = (r.status ?? "draft") as RecipeStatus;
+      if (statusFilter !== "all" && status !== statusFilter) return false;
+
+      if (mealTypeFilter !== "all") {
+        if ((r.meal_type ?? null) !== mealTypeFilter) return false;
+      }
+
       if (search.trim()) {
         const q = search.trim().toLowerCase();
         if (!r.name.toLowerCase().includes(q)) return false;
       }
       return true;
+    });
+
+    // 現場では「定番が上」が探しやすいので、定番優先→新しい順に
+    return filtered.sort((a, b) => {
+      const aT = a.is_template ? 1 : 0;
+      const bT = b.is_template ? 1 : 0;
+      if (aT !== bT) return bT - aT;
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
     });
   }, [recipes, search, statusFilter, mealTypeFilter, templateOnly]);
 
@@ -84,12 +98,20 @@ export default function RecipesPage() {
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
             レシピ一覧
           </h1>
-          <Link
-            href="/recipes/new"
-            className={cn(buttonVariants({ variant: "default" }))}
-          >
-            新規登録
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/recipes/new?mode=simple"
+              className={cn(buttonVariants({ variant: "secondary" }))}
+            >
+              簡易登録
+            </Link>
+            <Link
+              href="/recipes/new"
+              className={cn(buttonVariants({ variant: "default" }))}
+            >
+              通常登録
+            </Link>
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[220px]">
@@ -152,7 +174,7 @@ export default function RecipesPage() {
           <Skeleton className="h-12 w-full rounded-lg" />
           <Skeleton className="h-12 w-full rounded-lg" />
         </div>
-      ) : filteredRecipes.length === 0 ? (
+      ) : visibleRecipes.length === 0 ? (
         <EmptyState
           icon={BookOpen}
           title="レシピがまだ登録されていません"
@@ -189,7 +211,7 @@ export default function RecipesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {filteredRecipes.map((row) => (
+              {visibleRecipes.map((row) => (
                 <tr
                   key={row.id}
                   className="bg-white transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/80"
@@ -209,24 +231,19 @@ export default function RecipesPage() {
                     {row.servings}人前
                   </td>
                   <td className="px-4 py-3">
-                    {row.status === "simple" && (
+                    {(row.status ?? "draft") === "simple" && (
                       <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
                         簡易
                       </span>
                     )}
-                    {row.status === "draft" && (
+                    {(row.status ?? "draft") === "draft" && (
                       <span className="inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
                         下書き
                       </span>
                     )}
-                    {row.status === "published" && (
+                    {(row.status ?? "draft") === "published" && (
                       <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100">
                         完成
-                      </span>
-                    )}
-                    {!row.status && (
-                      <span className="inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-200">
-                        未設定
                       </span>
                     )}
                   </td>
@@ -245,6 +262,17 @@ export default function RecipesPage() {
                       : "—"}
                   </td>
                   <td className="px-4 py-3 space-x-2 whitespace-nowrap">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="inline-flex min-h-10 min-w-10"
+                      onClick={() => handleDuplicate(row.id)}
+                      disabled={duplicatingId === row.id}
+                    >
+                      <Copy className="mr-1 h-4 w-4" />
+                      {duplicatingId === row.id ? "コピー中..." : "コピー"}
+                    </Button>
                     <Link
                       href={`/recipes/${row.id}`}
                       className={cn(
@@ -254,17 +282,6 @@ export default function RecipesPage() {
                     >
                       編集
                     </Link>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="inline-flex min-h-10 min-w-10"
-                      onClick={() => handleDuplicate(row.id)}
-                      disabled={duplicatingId === row.id}
-                    >
-                      <Copy className="mr-1 h-4 w-4" />
-                      {duplicatingId === row.id ? "複製中..." : "複製"}
-                    </Button>
                   </td>
                 </tr>
               ))}
