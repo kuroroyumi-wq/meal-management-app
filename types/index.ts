@@ -6,6 +6,14 @@
 export type MealType = "朝食" | "昼食" | "夕食";
 export type MenuStatus = "draft" | "confirmed";
 export type ShiftType = "朝" | "昼" | "夕";
+export type DishRole =
+  | "staple"
+  | "main"
+  | "side"
+  | "soup"
+  | "dessert"
+  | "drink"
+  | "other";
 
 export interface NutritionPer100g {
   calories?: number;
@@ -74,6 +82,8 @@ export interface MenuItem {
   weekly_menu_id: string;
   date: string;
   meal_type: string;
+  dish_role: DishRole;
+  display_order: number;
   recipe_id: string | null;
   adjusted_servings: number | null;
 }

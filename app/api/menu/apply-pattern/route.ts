@@ -56,7 +56,13 @@ export async function POST(request: Request) {
     );
     const nameToIdExact = new Map((recipes ?? []).map((r) => [r.name, r.id]));
 
-    const menu_items: { date: string; meal_type: string; recipe_id: string | null }[] = [];
+    const menu_items: {
+      date: string;
+      meal_type: string;
+      dish_role: string;
+      display_order: number;
+      recipe_id: string | null;
+    }[] = [];
     const pat = pattern as GeneratedMenuJson;
 
     for (let i = 0; i < DAY_KEYS.length; i++) {
@@ -79,6 +85,8 @@ export async function POST(request: Request) {
         menu_items.push({
           date: dateStr,
           meal_type: mealJa,
+          dish_role: "main",
+          display_order: 1,
           recipe_id: recipeId,
         });
       }
@@ -105,6 +113,8 @@ export async function POST(request: Request) {
       weekly_menu_id: menu.id,
       date: m.date,
       meal_type: m.meal_type,
+      dish_role: m.dish_role,
+      display_order: m.display_order,
       recipe_id: m.recipe_id,
       adjusted_servings: null,
     }));

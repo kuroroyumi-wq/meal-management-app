@@ -76,6 +76,8 @@ export async function POST(request: Request) {
     const menu_items: {
       date: string;
       meal_type: string;
+      dish_role: string;
+      display_order: number;
       recipe_id: string | null;
       recipe_name: string;
     }[] = [];
@@ -92,6 +94,8 @@ export async function POST(request: Request) {
         menu_items.push({
           date,
           meal_type: mealType,
+          dish_role: "main",
+          display_order: 1,
           recipe_id,
           recipe_name: recipeName || "—",
         });

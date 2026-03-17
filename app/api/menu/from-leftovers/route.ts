@@ -81,7 +81,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "無効な week_start です" }, { status: 400 });
     }
 
-    const menu_items: { date: string; meal_type: string; recipe_id: string | null }[] = [];
+    const menu_items: {
+      date: string;
+      meal_type: string;
+      dish_role: string;
+      display_order: number;
+      recipe_id: string | null;
+    }[] = [];
     let recipeIndex = 0;
     for (let d = 0; d < 7; d++) {
       const date = new Date(start);
@@ -90,7 +96,13 @@ export async function POST(request: Request) {
       for (const meal_type of MEAL_TYPES) {
         const recipeId = suggestedIds[recipeIndex % suggestedIds.length];
         recipeIndex++;
-        menu_items.push({ date: dateStr, meal_type, recipe_id: recipeId });
+        menu_items.push({
+          date: dateStr,
+          meal_type,
+          dish_role: "main",
+          display_order: 1,
+          recipe_id: recipeId,
+        });
       }
     }
 
@@ -113,6 +125,8 @@ export async function POST(request: Request) {
         weekly_menu_id: menu.id,
         date: m.date,
         meal_type: m.meal_type,
+        dish_role: m.dish_role,
+        display_order: m.display_order,
         recipe_id: m.recipe_id,
         adjusted_servings: null,
       }))

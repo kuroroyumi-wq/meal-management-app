@@ -31,10 +31,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
     const { data: items, error: itemsError } = await supabase
       .from("menu_items")
-      .select("id, weekly_menu_id, date, meal_type, recipe_id, adjusted_servings")
+      .select(
+        "id, weekly_menu_id, date, meal_type, dish_role, display_order, recipe_id, adjusted_servings"
+      )
       .eq("weekly_menu_id", id)
       .order("date", { ascending: true })
-      .order("meal_type", { ascending: true });
+      .order("meal_type", { ascending: true })
+      .order("display_order", { ascending: true });
 
     const result: WeeklyMenuWithItems = { ...menu, menu_items: [] };
 
@@ -100,7 +103,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     const items = Array.isArray(menu_items)
       ? menu_items.filter(
-          (m: { date?: string; meal_type?: string }) => m.date && m.meal_type
+          (m: { date?: string; meal_type?: string; dish_role?: string }) =>
+            m.date && m.meal_type && m.dish_role
         )
       : [];
 
@@ -110,12 +114,17 @@ export async function PUT(request: Request, { params }: RouteParams) {
           (m: {
             date: string;
             meal_type: string;
+            dish_role: string;
+            display_order?: number | null;
             recipe_id?: string | null;
             adjusted_servings?: number | null;
           }) => ({
             weekly_menu_id: id,
             date: String(m.date).trim(),
             meal_type: String(m.meal_type).trim(),
+            dish_role: String(m.dish_role).trim(),
+            display_order:
+              m.display_order != null ? Number(m.display_order) : 0,
             recipe_id: m.recipe_id || null,
             adjusted_servings: m.adjusted_servings ?? null,
           })

@@ -67,8 +67,9 @@ export async function GET() {
         .lt("purchased_at", `${month}-32`),
       supabase
         .from("menu_items")
-        .select("meal_type, recipe_id")
-        .eq("date", today),
+        .select("meal_type, recipe_id, dish_role, display_order")
+        .eq("date", today)
+        .order("display_order", { ascending: true }),
       supabase
         .from("ingredients")
         .select("id, name")
@@ -102,9 +103,15 @@ export async function GET() {
         .select("id, name")
         .in("id", recipeIds);
       const nameMap = new Map((recipes ?? []).map((r) => [r.id, r.name]));
+      // 1食に複数品があるため、まずは display_order 最小の1品を「今日の献立」として表示
+      const picked = new Set<string>();
       for (const i of todayItemsRes.data ?? []) {
+        if (picked.has(i.meal_type)) continue;
         const key = mealKey[i.meal_type];
-        if (key) todayMenu[key] = nameMap.get(i.recipe_id) ?? "—";
+        if (key) {
+          todayMenu[key] = i.recipe_id ? nameMap.get(i.recipe_id) ?? "—" : "—";
+          picked.add(i.meal_type);
+        }
       }
     }
 

@@ -7,6 +7,14 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { WeeklyMenuWithItems } from "@/types";
 
+const DISH_ROLES = [
+  { value: "staple", label: "主食", order: 0 },
+  { value: "main", label: "主菜", order: 1 },
+  { value: "side", label: "副菜", order: 2 },
+  { value: "soup", label: "汁物", order: 3 },
+  { value: "dessert", label: "デザート", order: 4 },
+] as const;
+
 function formatDate(s: string) {
   const d = new Date(s);
   return isNaN(d.getTime()) ? s : `${d.getMonth() + 1}/${d.getDate()}`;
@@ -160,26 +168,54 @@ export default function MenuDetailPage() {
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {dates.map((date) => {
                 const dayItems = byDate[date];
-                const byMeal = dayItems.reduce<Record<string, string>>(
+                const byMeal = dayItems.reduce<Record<string, typeof dayItems>>(
                   (acc, i) => {
-                    acc[i.meal_type] = i.recipe?.name ?? "—";
+                    if (!acc[i.meal_type]) acc[i.meal_type] = [];
+                    acc[i.meal_type].push(i);
                     return acc;
                   },
                   {}
                 );
+
+                function renderMeal(mealType: "朝食" | "昼食" | "夕食") {
+                  const list = (byMeal[mealType] ?? [])
+                    .slice()
+                    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+
+                  if (list.length === 0) return <span>—</span>;
+
+                  return (
+                    <div className="space-y-1">
+                      {DISH_ROLES.map((role) => {
+                        const item = list.find((i) => i.dish_role === role.value);
+                        const name = item?.recipe?.name ?? "—";
+                        return (
+                          <div key={role.value} className="flex gap-2">
+                            <span className="w-16 shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                              {role.label}
+                            </span>
+                            <span className="text-zinc-700 dark:text-zinc-300">
+                              {name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
                 return (
                   <tr key={date} className="bg-white dark:bg-zinc-900">
                     <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
                       {date} ({formatDate(date)})
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                      {byMeal["朝食"] ?? "—"}
+                      {renderMeal("朝食")}
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                      {byMeal["昼食"] ?? "—"}
+                      {renderMeal("昼食")}
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                      {byMeal["夕食"] ?? "—"}
+                      {renderMeal("夕食")}
                     </td>
                   </tr>
                 );

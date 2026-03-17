@@ -52,7 +52,8 @@ export async function POST(request: Request) {
 
     const items = Array.isArray(menu_items)
       ? menu_items.filter(
-          (m: { date?: string; meal_type?: string }) => m.date && m.meal_type
+          (m: { date?: string; meal_type?: string; dish_role?: string }) =>
+            m.date && m.meal_type && m.dish_role
         )
       : [];
 
@@ -62,12 +63,17 @@ export async function POST(request: Request) {
           (m: {
             date: string;
             meal_type: string;
+            dish_role: string;
+            display_order?: number | null;
             recipe_id?: string | null;
             adjusted_servings?: number | null;
           }) => ({
             weekly_menu_id: menu.id,
             date: String(m.date).trim(),
             meal_type: String(m.meal_type).trim(),
+            dish_role: String(m.dish_role).trim(),
+            display_order:
+              m.display_order != null ? Number(m.display_order) : 0,
             recipe_id: m.recipe_id || null,
             adjusted_servings: m.adjusted_servings ?? null,
           })
