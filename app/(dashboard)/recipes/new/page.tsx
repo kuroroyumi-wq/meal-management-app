@@ -49,6 +49,7 @@ function RecipeNewPageInner() {
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showOptionalInSimple, setShowOptionalInSimple] = useState(false);
 
   useEffect(() => {
     const q = searchParams.get("mode");
@@ -218,6 +219,24 @@ function RecipeNewPageInner() {
         </div>
       )}
 
+      {mode === "simple" && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 shadow-sm dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+          <div className="font-semibold">簡易登録（最短入力）</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-emerald-900/90 dark:text-emerald-100/90">
+            <li>必須: レシピ名 / 人数 / 食事区分</li>
+            <li>推奨: 切り方・大きさ / 作り方（3〜5行）</li>
+            <li>材料は後回しでもOK（必要なら下で入力）</li>
+          </ul>
+          <button
+            type="button"
+            className="mt-3 inline-flex rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-900/40"
+            onClick={() => setShowOptionalInSimple((v) => !v)}
+          >
+            {showOptionalInSimple ? "任意項目を閉じる" : "任意項目（材料・URL）を開く"}
+          </button>
+        </div>
+      )}
+
       {mode === "normal" && (
         <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -334,18 +353,22 @@ function RecipeNewPageInner() {
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                レシピURL
-              </label>
-              <input
-                type="url"
-                value={form.source_url}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, source_url: e.target.value }))
-                }
-                placeholder="https://..."
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              />
+              {(mode === "normal" || showOptionalInSimple) && (
+                <>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    レシピURL（任意）
+                  </label>
+                  <input
+                    type="url"
+                    value={form.source_url}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, source_url: e.target.value }))
+                    }
+                    placeholder="https://..."
+                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </>
+              )}
             </div>
             {mode === "normal" && (
               <div className="sm:col-span-2">
@@ -366,85 +389,87 @@ function RecipeNewPageInner() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              材料
-            </h2>
-            <Button type="button" variant="outline" size="sm" onClick={addRow}>
-              行を追加
-            </Button>
-          </div>
-          <p className="mb-3 text-xs text-zinc-600 dark:text-zinc-400">
-            {mode === "simple"
-              ? "よく使う食材だけ選んで、ざっくり量を入れてください。後から通常編集で細かく調整できます。"
-              : "食材マスタから選択して、人数1人あたりの材料量を入力します。"}
-          </p>
-          <div className="space-y-2">
-            {rows.map((row, index) => (
-              <div
-                key={index}
-                className="flex flex-wrap items-end gap-2 sm:flex-nowrap"
-              >
-                <div className="min-w-0 flex-1">
-                  <label className="mb-1 block text-xs text-zinc-500">
-                    食材
-                  </label>
-                  <select
-                    value={row.ingredient_id}
-                    onChange={(e) =>
-                      updateRow(index, "ingredient_id", e.target.value)
-                    }
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  >
-                    <option value="">
-                      {row.displayName ? `（取り込んだ）${row.displayName}` : "選択"}
-                    </option>
-                    {ingredients.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.name}（{i.unit}）
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="w-24">
-                  <label className="mb-1 block text-xs text-zinc-500">量</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={row.amount}
-                    onChange={(e) =>
-                      updateRow(index, "amount", e.target.value)
-                    }
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                </div>
-                <div className="w-20">
-                  <label className="mb-1 block text-xs text-zinc-500">単位</label>
-                  <input
-                    type="text"
-                    value={row.unit}
-                    onChange={(e) =>
-                      updateRow(index, "unit", e.target.value)
-                    }
-                    placeholder="g"
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeRow(index)}
-                  className="shrink-0"
+        {(mode === "normal" || showOptionalInSimple) && (
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                {mode === "simple" ? "材料（任意・主要だけでOK）" : "材料"}
+              </h2>
+              <Button type="button" variant="outline" size="sm" onClick={addRow}>
+                行を追加
+              </Button>
+            </div>
+            <p className="mb-3 text-xs text-zinc-600 dark:text-zinc-400">
+              {mode === "simple"
+                ? "最初は主要な食材だけでもOKです。原価・栄養を厳密にしたい場合は、後から通常編集で材料を追加してください。"
+                : "食材マスタから選択して、人数1人あたりの材料量を入力します。"}
+            </p>
+            <div className="space-y-2">
+              {rows.map((row, index) => (
+                <div
+                  key={index}
+                  className="flex flex-wrap items-end gap-2 sm:flex-nowrap"
                 >
-                  削除
-                </Button>
-              </div>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <label className="mb-1 block text-xs text-zinc-500">
+                      食材
+                    </label>
+                    <select
+                      value={row.ingredient_id}
+                      onChange={(e) =>
+                        updateRow(index, "ingredient_id", e.target.value)
+                      }
+                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                    >
+                      <option value="">
+                        {row.displayName ? `（取り込んだ）${row.displayName}` : "選択"}
+                      </option>
+                      {ingredients.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.name}（{i.unit}）
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-24">
+                    <label className="mb-1 block text-xs text-zinc-500">量</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={row.amount}
+                      onChange={(e) =>
+                        updateRow(index, "amount", e.target.value)
+                      }
+                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                    />
+                  </div>
+                  <div className="w-20">
+                    <label className="mb-1 block text-xs text-zinc-500">単位</label>
+                    <input
+                      type="text"
+                      value={row.unit}
+                      onChange={(e) =>
+                        updateRow(index, "unit", e.target.value)
+                      }
+                      placeholder="g"
+                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeRow(index)}
+                    className="shrink-0"
+                  >
+                    削除
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-wrap gap-3">
           <Link
