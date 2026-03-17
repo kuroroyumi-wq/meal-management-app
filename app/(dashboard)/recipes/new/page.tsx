@@ -227,13 +227,19 @@ function RecipeNewPageInner() {
             <li>推奨: 切り方・大きさ / 作り方（3〜5行）</li>
             <li>材料は後回しでもOK（必要なら下で入力）</li>
           </ul>
-          <button
-            type="button"
-            className="mt-3 inline-flex rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-900/40"
-            onClick={() => setShowOptionalInSimple((v) => !v)}
-          >
-            {showOptionalInSimple ? "任意項目を閉じる" : "任意項目（材料・URL）を開く"}
-          </button>
+          <div className="mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-expanded={showOptionalInSimple}
+              aria-controls="simple-optional-area"
+              className="border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-900/40"
+              onClick={() => setShowOptionalInSimple((v) => !v)}
+            >
+              {showOptionalInSimple ? "任意項目を閉じる" : "任意項目（材料・URL）を開く"}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -390,7 +396,10 @@ function RecipeNewPageInner() {
         </div>
 
         {(mode === "normal" || showOptionalInSimple) && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+          <div
+            id="simple-optional-area"
+            className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80"
+          >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 {mode === "simple" ? "材料（任意・主要だけでOK）" : "材料"}
