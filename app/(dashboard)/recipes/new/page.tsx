@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Alert } from "@/components/ui/alert";
@@ -18,6 +18,16 @@ type IngredientRow = {
 };
 
 export default function RecipeNewPage() {
+  return (
+    <Suspense
+      fallback={<p className="text-zinc-500 dark:text-zinc-400">読み込み中...</p>}
+    >
+      <RecipeNewPageInner />
+    </Suspense>
+  );
+}
+
+function RecipeNewPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
