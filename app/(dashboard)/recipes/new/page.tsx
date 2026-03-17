@@ -26,6 +26,7 @@ export default function RecipeNewPage() {
   const [form, setForm] = useState({
     name: "",
     description: "",
+    cutting_notes: "",
     servings: "1",
     meal_type: "",
     source_url: "",
@@ -128,6 +129,7 @@ export default function RecipeNewPage() {
         body: JSON.stringify({
           name: form.name.trim(),
           description: form.description.trim() || null,
+          cutting_notes: form.cutting_notes.trim() || null,
           servings: Number(form.servings) || 1,
           meal_type: form.meal_type || null,
           source_url: form.source_url.trim() || null,
@@ -256,15 +258,36 @@ export default function RecipeNewPage() {
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                説明
+                作り方・手順
               </label>
+              <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
+                調理の流れを番号付きで書くと調理師が確認しやすくなります（任意）
+              </p>
               <textarea
                 value={form.description}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, description: e.target.value }))
                 }
-                rows={2}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                rows={5}
+                placeholder={"例：\n① 野菜を切る\n② 鍋に油を熱し、玉ねぎを炒める\n③ 調味料を加えて煮る"}
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                切り方・大きさの目安
+              </label>
+              <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
+                食材ごとの切り方やサイズの目安があると調理指示書で役立ちます（任意）
+              </p>
+              <textarea
+                value={form.cutting_notes}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, cutting_notes: e.target.value }))
+                }
+                rows={4}
+                placeholder={"例：\n・じゃがいも：2cm角\n・玉ねぎ：薄切り\n・にんじん：いちょう切り 5mm"}
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
             </div>
             <div>

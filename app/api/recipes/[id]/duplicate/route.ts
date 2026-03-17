@@ -27,6 +27,7 @@ export async function POST(_request: Request, { params }: RouteParams) {
       .insert({
         name: `${original.name} のコピー`,
         description: original.description,
+        cutting_notes: original.cutting_notes ?? null,
         servings: original.servings,
         meal_type: original.meal_type,
         source_url: original.source_url,

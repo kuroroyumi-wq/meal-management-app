@@ -29,7 +29,10 @@ export type RecipeStatus = "draft" | "simple" | "published";
 export interface Recipe {
   id: string;
   name: string;
+  /** UIでは「作り方・手順」として表示。DBカラムは description のまま */
   description: string | null;
+  /** 切り方・大きさの目安（調理指示書用） */
+  cutting_notes?: string | null;
   servings: number;
   meal_type: MealType | null;
   source_url: string | null;

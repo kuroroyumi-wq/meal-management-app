@@ -76,6 +76,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     const {
       name,
       description,
+      cutting_notes,
       servings,
       meal_type,
       source_url,
@@ -102,6 +103,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
         description:
           description != null && description !== ""
             ? String(description).trim()
+            : null,
+        cutting_notes:
+          cutting_notes != null && String(cutting_notes).trim() !== ""
+            ? String(cutting_notes).trim()
             : null,
         servings: servings != null ? Math.max(1, Number(servings)) : 1,
         meal_type:
